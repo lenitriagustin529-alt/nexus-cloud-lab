@@ -1,121 +1,248 @@
-# LAPORAN PENGUMPULAN PRAKTIKUM ADVANCED DOCKER COMPOSE
+# ANALISIS ARSITEKTUR NEXUS CLOUD LAB
 
-## 1. Identitas Mahasiswa
+## 1. Gambaran Umum
 
-- **Nama:** Leni Tri Agustin
-- **NPM:** 2024606601020
-- **Semester:** 5
-- **Nama Proyek:** NEXUS Cloud Lab
+NEXUS Cloud Lab merupakan aplikasi berbasis multi-container yang dibangun dan dikelola menggunakan Docker Compose.
 
-## 2. Repository Proyek
+Aplikasi ini dirancang dengan memisahkan setiap komponen ke dalam container berdasarkan fungsi dan tanggung jawab masing-masing. Pemisahan tersebut bertujuan untuk mempermudah pengelolaan layanan, komunikasi antarkontainer, penyimpanan data, serta pemeliharaan aplikasi.
 
-**Repository GitHub:**
+Sistem terdiri dari empat service utama:
 
-https://github.com/lenitriagustin529-alt/nexus-cloud-lab
+1. **Nginx:** Berfungsi sebagai Reverse Proxy yang menerima request dari pengguna dan meneruskannya ke aplikasi Web.
+2. **Web Application:** Menggunakan Flask dan Gunicorn untuk menjalankan backend serta dashboard aplikasi.
+3. **PostgreSQL:** Berfungsi sebagai database utama untuk menyimpan data aplikasi secara permanen.
+4. **Redis:** Berfungsi sebagai cache untuk membantu mempercepat akses data.
 
-**Dokumentasi Screenshot Pengujian:**
-
-https://github.com/lenitriagustin529-alt/nexus-cloud-lab/tree/main/bukti-pengujian/screenshot
-
-**Dokumentasi Analisis Arsitektur:**
-
-`ANALISIS-ARSITEKTUR.md`
-
-## 3. Deskripsi Proyek
-
-NEXUS Cloud Lab merupakan proyek implementasi aplikasi berbasis multi-container menggunakan Docker Compose. Proyek ini mengintegrasikan empat service utama yang saling berkomunikasi untuk membangun lingkungan aplikasi yang terstruktur dan mudah dikelola.
-
-Teknologi yang digunakan meliputi:
-
-1. **Nginx:** Sebagai reverse proxy dan pintu masuk akses aplikasi.
-2. **Flask dan Gunicorn:** Sebagai Web Application yang menangani permintaan pengguna.
-3. **PostgreSQL:** Sebagai sistem manajemen basis data untuk menyimpan data aplikasi.
-4. **Redis:** Sebagai cache untuk membantu mempercepat akses data.
-
-Implementasi juga menggunakan Docker Network untuk komunikasi antarkontainer dan named volume untuk menjaga persistensi data.
-
-## 4. Arsitektur dan Fitur Aplikasi
-
-Aplikasi NEXUS Cloud Lab menyediakan dashboard yang terdiri dari lima halaman utama:
-
-| Halaman | Fungsi |
-|---|---|
-| Overview | Menampilkan ringkasan kondisi aplikasi dan service |
-| Services | Menampilkan informasi status layanan |
-| Database | Menampilkan informasi dan aktivitas PostgreSQL |
-| Cache Monitor | Memantau aktivitas Redis Cache |
-| Activity | Menampilkan aktivitas aplikasi |
-
-Aplikasi dapat diakses melalui Nginx pada alamat lokal:
+Aplikasi dapat diakses melalui browser menggunakan alamat:
 
 `http://localhost:8081`
 
-Dokumentasi lebih lengkap mengenai arsitektur, fungsi setiap service, komunikasi antarkontainer, Docker Network, dan Docker Volume tersedia pada file `ANALISIS-ARSITEKTUR.md`.
+## 2. Diagram Arsitektur
 
-## 5. Implementasi dan Hasil Pengujian
+Diagram berikut menggambarkan hubungan antara pengguna, layanan aplikasi, jaringan Docker, dan penyimpanan data.
 
-Implementasi dan pengujian yang telah dilakukan mencakup:
+```mermaid
+flowchart TD
+    A[User / Web Browser] -->|HTTP localhost:8081| B[Nginx Reverse Proxy]
 
-1. Menjalankan empat service menggunakan Docker Compose.
-2. Memeriksa status container dan healthcheck.
-3. Menguji komunikasi antarkontainer.
-4. Memeriksa konfigurasi Docker Network.
-5. Memeriksa penggunaan Docker Volume.
-6. Menguji penyimpanan data PostgreSQL.
-7. Menguji persistensi data setelah container database dibuat ulang.
-8. Menguji mekanisme Redis Cache MISS dan Cache HIT.
-9. Menguji Cache Invalidation.
-10. Menguji gangguan pada Redis dan Web Application.
-11. Menguji kesalahan konfigurasi upstream Nginx yang menghasilkan HTTP 502.
-12. Memperbaiki konfigurasi Nginx dan memastikan aplikasi kembali dapat diakses dengan HTTP 200.
-13. Menguji restart resilience dan memeriksa kondisi service setelah restart.
+    B -->|HTTP web:5000| C[Flask Web Application + Gunicorn]
 
-Berdasarkan pengujian yang telah dilakukan, aplikasi dapat dijalankan menggunakan Docker Compose, service dapat berkomunikasi sesuai konfigurasi, dan data PostgreSQL tetap tersedia setelah container database dibuat ulang melalui named volume.
+    C -->|Database Connection| D[(PostgreSQL)]
+    C -->|Cache Connection| E[(Redis)]
 
-## 6. Dokumentasi Challenge D16–D20
+    D --> F[(PostgreSQL Named Volume)]
+    E --> G[(Redis Named Volume)]
 
-### D16 – Application Inaccessible
+    subgraph Frontend Network
+        B
+        C
+    end
 
-Melakukan simulasi gangguan pada Web Application untuk mengamati dampaknya terhadap akses aplikasi melalui Nginx.
+    subgraph Backend Network
+        C
+        D
+        E
+    end
+```
 
-### D17 – Volume dan Data Persistence
+Arsitektur menggunakan pemisahan jaringan frontend dan backend untuk mengatur komunikasi antarkontainer sesuai dengan kebutuhan layanan.
 
-Menguji persistensi data PostgreSQL dengan membuat ulang container database dan memastikan data sebelumnya tetap tersedia melalui named volume.
+## 3. Fungsi Setiap Service
 
-### D18 – Redis Cache
+### 3.1 Nginx Reverse Proxy
 
-Menguji mekanisme Redis Cache yang meliputi Cache MISS, Cache HIT, Cache Invalidation, serta dampak gangguan Redis terhadap aplikasi.
+Nginx berfungsi sebagai pintu masuk utama aplikasi.
 
-### D19 – Service Configuration
+Fungsi Nginx meliputi:
 
-Melakukan kesalahan konfigurasi upstream Nginx secara sengaja sehingga menghasilkan HTTP 502. Selanjutnya konfigurasi diperbaiki dan aplikasi dipastikan kembali dapat diakses dengan HTTP 200.
+- Menerima permintaan HTTP dari browser melalui port 8081 pada host.
+- Meneruskan request ke Flask Web Application melalui alamat internal `web:5000`.
+- Mengatur komunikasi antara pengguna dan backend aplikasi.
+- Menjadi reverse proxy agar pengguna tidak perlu mengakses port backend secara langsung.
 
-### D20 – Restart Resilience
+Nginx menggunakan image `nginx:1.27-alpine`.
 
-Menguji kemampuan service untuk berjalan kembali setelah proses restart, memeriksa status kesehatan container, serta memastikan data PostgreSQL tetap tersedia.
+### 3.2 Web Application
 
-## 7. Dokumentasi Screenshot
+Web Application dibangun menggunakan Flask dan dijalankan melalui Gunicorn.
 
-Dokumentasi implementasi dan pengujian disimpan dalam folder:
+Fungsi Web Application meliputi:
 
-`bukti-pengujian/screenshot/`
+- Memproses permintaan pengguna.
+- Menyediakan halaman dashboard.
+- Mengelola komunikasi dengan PostgreSQL dan Redis.
+- Menyediakan endpoint API untuk pemeriksaan kesehatan aplikasi, catatan, dan statistik.
+- Mengelola proses penyimpanan serta pengambilan data.
 
-Berdasarkan daftar file pada komputer, terdapat **29 screenshot** yang terdiri dari:
+Web Application menggunakan image yang dibangun dari Dockerfile proyek.
 
-- 5 screenshot halaman dashboard terbaru: Overview, Services, Database, Cache Monitor, dan Activity.
-- 23 screenshot dokumentasi implementasi, konfigurasi, pengujian, serta troubleshooting.
-- 1 screenshot status akhir Docker Compose.
+### 3.3 PostgreSQL Database
 
-Dokumentasi tersebut mencakup bukti kondisi container, pengujian Redis, persistensi PostgreSQL, gangguan service, pemulihan Nginx, restart resilience, konfigurasi Docker, komunikasi antarkontainer, dan tampilan dashboard aplikasi.
+PostgreSQL berfungsi sebagai database utama aplikasi.
 
-## 8. Kesimpulan
+Fungsi PostgreSQL meliputi:
 
-Berdasarkan implementasi dan pengujian yang telah dilakukan, proyek NEXUS Cloud Lab berhasil membangun aplikasi berbasis Docker Compose yang terdiri dari empat service utama, yaitu Nginx sebagai reverse proxy, Web Application menggunakan Flask dan Gunicorn, PostgreSQL sebagai database, serta Redis sebagai cache.
+- Menyimpan data catatan aplikasi.
+- Mengelola operasi penyimpanan dan pengambilan data.
+- Menjaga data tetap tersedia melalui named volume.
+- Menjadi sumber data utama aplikasi.
 
-Implementasi ini menerapkan Docker Network untuk komunikasi antarkontainer dan named volume untuk menjaga persistensi data. Aplikasi juga menyediakan dashboard dengan lima halaman utama untuk menampilkan informasi dan aktivitas sistem.
+PostgreSQL menggunakan image `postgres:16-alpine`.
 
-Pengujian mencakup pemeriksaan kesehatan container, komunikasi antarlayanan, penyimpanan dan persistensi data PostgreSQL, mekanisme Redis Cache, simulasi gangguan service, kesalahan konfigurasi upstream Nginx, serta restart resilience.
+### 3.4 Redis Cache
 
-Hasil implementasi dan pengujian didokumentasikan melalui screenshot dan file analisis arsitektur yang tersedia pada repository GitHub.
+Redis berfungsi sebagai penyimpanan cache sementara.
 
-Dengan demikian, proyek ini memberikan pengalaman praktis dalam membangun, mengelola, menguji, dan melakukan troubleshooting aplikasi multi-container menggunakan Docker Compose.
+Fungsi Redis meliputi:
+
+- Menyimpan cache daftar catatan.
+- Mempercepat akses terhadap data yang sering diminta.
+- Mengurangi pengambilan data berulang dari PostgreSQL.
+- Menggunakan TTL 30 detik untuk masa berlaku cache.
+- Mendukung mekanisme Cache MISS, Cache HIT, dan Cache Invalidation.
+
+Redis menggunakan image `redis:7-alpine`.
+
+Redis bukan sumber penyimpanan data permanen aplikasi. PostgreSQL tetap menjadi sumber data utama.
+
+## 4. Arsitektur Dashboard Aplikasi
+
+NEXUS Cloud Lab memiliki dashboard modern dengan sistem navigasi multi-halaman.
+
+Dashboard terdiri dari lima halaman utama:
+
+| No. | Halaman | Route | Fungsi |
+|---|---|---|---|
+| 1 | Overview | `/` | Menampilkan ringkasan dashboard dan kondisi sistem |
+| 2 | Services | `/services` | Menampilkan informasi layanan aplikasi |
+| 3 | Database | `/database` | Menampilkan informasi dan pemantauan PostgreSQL |
+| 4 | Cache Monitor | `/cache` | Menampilkan informasi Redis dan cache |
+| 5 | Activity | `/activity` | Menampilkan informasi aktivitas aplikasi |
+
+Seluruh halaman berjalan pada Flask Web Application dan diakses melalui Nginx Reverse Proxy.
+
+Pemisahan halaman membantu pengguna mengakses informasi sistem secara lebih terstruktur melalui menu navigasi.
+
+## 5. Jaringan dan Penyimpanan
+
+### 5.1 Docker Network
+
+Docker Compose menggunakan dua jaringan utama untuk mengatur komunikasi antarkontainer.
+
+**A. Frontend Network**
+
+Nama jaringan: `advanced_frontend`
+
+Fungsi:
+
+- Menghubungkan Nginx dengan Web Application.
+- Memungkinkan Nginx meneruskan request ke backend.
+- Memisahkan akses pengguna dari layanan database dan cache.
+
+**B. Backend Network**
+
+Nama jaringan: `advanced_backend`
+
+Fungsi:
+
+- Menghubungkan Web Application dengan PostgreSQL.
+- Menghubungkan Web Application dengan Redis.
+- Mengatur komunikasi internal layanan backend.
+- Menggunakan konfigurasi internal agar jaringan backend tidak dipublikasikan secara langsung ke host.
+
+### 5.2 Docker Volume
+
+Proyek menggunakan named volume untuk menjaga persistensi data.
+
+| Nama Volume | Mount Path | Fungsi |
+|---|---|---|
+| `advanced_postgres_data` | `/var/lib/postgresql/data` | Menyimpan data PostgreSQL |
+| `advanced_redis_data` | `/data` | Menyimpan data Redis |
+
+Named volume memungkinkan data tetap tersedia ketika container dihentikan, dihapus, dan dibuat kembali selama volume tidak ikut dihapus.
+
+Dengan demikian, penyimpanan data tidak bergantung sepenuhnya pada siklus hidup container.
+
+## 6. Alur Komunikasi Aplikasi
+
+Alur komunikasi sistem berlangsung melalui beberapa tahapan:
+
+1. Pengguna membuka aplikasi melalui browser dengan alamat `http://localhost:8081`.
+2. Nginx menerima permintaan HTTP dari pengguna.
+3. Nginx meneruskan permintaan ke Flask Web Application melalui service `web` pada port internal 5000.
+4. Flask memproses permintaan berdasarkan route atau endpoint yang diakses.
+5. Apabila membutuhkan data utama, Flask berkomunikasi dengan PostgreSQL melalui service `db`.
+6. Apabila membutuhkan cache, Flask berkomunikasi dengan Redis melalui service `redis`.
+7. PostgreSQL menyimpan data permanen, sedangkan Redis menangani penyimpanan cache sementara.
+8. Hasil pemrosesan dikirim kembali kepada pengguna melalui Flask dan Nginx.
+
+Alur tersebut memungkinkan setiap layanan bekerja sesuai tanggung jawabnya dan berkomunikasi melalui jaringan internal Docker Compose.
+
+## 7. Mekanisme Persistensi dan Cache
+
+### 7.1 Persistensi Data
+
+PostgreSQL menggunakan named volume `advanced_postgres_data` untuk menyimpan data aplikasi.
+
+Ketika container PostgreSQL dibuat ulang, data tetap tersedia selama named volume tidak dihapus.
+
+Mekanisme ini dibuktikan melalui pengujian tantangan A, yaitu penghapusan dan pembuatan ulang container tanpa menghapus volume.
+
+### 7.2 Mekanisme Cache Redis
+
+Redis digunakan untuk menyimpan cache daftar catatan aplikasi dengan TTL 30 detik.
+
+Mekanisme cache meliputi:
+
+- **Cache MISS:** Data belum tersedia di cache sehingga aplikasi mengambil data dari sumber utama.
+- **Cache HIT:** Data tersedia di cache sehingga dapat digunakan kembali.
+- **Cache Invalidation:** Cache dihapus ketika terdapat perubahan data agar informasi terbaru dapat ditampilkan.
+
+Penggunaan cache membantu mengurangi pengambilan data berulang dari PostgreSQL.
+
+## 8. Keamanan dan Keandalan Sistem
+
+Beberapa mekanisme diterapkan untuk mendukung keamanan dan keandalan aplikasi:
+
+1. Pemisahan jaringan frontend dan backend.
+2. Database dan Redis tidak memublikasikan port secara langsung ke host.
+3. Penggunaan environment variable melalui file `.env`.
+4. Penggunaan named volume untuk menjaga persistensi data.
+5. Penggunaan healthcheck untuk memantau kondisi service.
+6. Penggunaan kebijakan restart untuk membantu pemulihan container.
+7. Penggunaan `depends_on` dengan kondisi `service_healthy` sesuai konfigurasi service.
+8. Penggunaan Nginx sebagai reverse proxy untuk mengatur akses menuju backend.
+
+Konfigurasi tersebut diterapkan untuk mendukung pengelolaan aplikasi dalam lingkungan praktikum berbasis Docker Compose.
+
+## 9. Hasil Analisis dan Pengujian
+
+Berdasarkan implementasi dan pengujian proyek, beberapa aspek yang telah diuji meliputi:
+
+| No. | Aspek Pengujian | Hasil |
+|---|---|---|
+| 1 | Menjalankan empat service Docker Compose | Berhasil |
+| 2 | Mengakses aplikasi melalui Nginx | Berhasil |
+| 3 | Navigasi lima halaman dashboard | Berhasil |
+| 4 | Komunikasi Web dengan PostgreSQL | Diuji |
+| 5 | Komunikasi Web dengan Redis | Diuji |
+| 6 | Cache MISS dan Cache HIT | Diuji |
+| 7 | Cache Invalidation | Diuji |
+| 8 | Persistensi data PostgreSQL (Tantangan A) | Berhasil |
+| 9 | Penghentian service (Tantangan B) | Diuji |
+| 10 | Kesalahan konfigurasi Nginx (Tantangan C) | Berhasil diperbaiki |
+| 11 | Restart Resilience (Tantangan D) | Diuji |
+
+Pengujian tantangan A–D telah dilaksanakan dalam proses praktikum dan didokumentasikan melalui bukti pengujian proyek.
+
+## 10. Kesimpulan
+
+Berdasarkan hasil implementasi dan analisis, NEXUS Cloud Lab berhasil menerapkan arsitektur aplikasi multi-container menggunakan Docker Compose dengan empat service utama, yaitu Flask Web Application, PostgreSQL, Redis, dan Nginx Reverse Proxy.
+
+Sistem menggunakan Docker Network untuk mengatur komunikasi antarkontainer dan named volume untuk menjaga persistensi data. PostgreSQL berfungsi sebagai sumber data utama, sedangkan Redis digunakan untuk pengelolaan cache.
+
+Aplikasi juga dilengkapi dashboard multi-halaman yang terdiri dari Overview, Services, Database, Cache Monitor, dan Activity. Seluruh halaman dapat diakses melalui Nginx Reverse Proxy pada alamat `http://localhost:8081`.
+
+Pengujian mencakup komunikasi antarservice, persistensi data, mekanisme cache, penghentian service, kesalahan konfigurasi Nginx, serta restart resilience.
+
+Dengan demikian, proyek ini menunjukkan penerapan konsep containerization, orkestrasi layanan, komunikasi jaringan, penyimpanan data, dan troubleshooting menggunakan Docker Compose dalam lingkungan praktikum.
