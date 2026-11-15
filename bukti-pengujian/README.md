@@ -24,20 +24,49 @@ Proyek: NEXUS Cloud Lab — Advanced Docker Compose
 
 ## Daftar Screenshot
 
-1. Tampilan dashboard NEXUS.
-2. Status empat container Docker.
-3. Pengujian Redis Cache MISS.
-4. Pengujian Redis Cache HIT.
-5. Hasil penyimpanan PostgreSQL.
-6. Pengujian persistensi setelah container dibuat ulang.
-7. Pengujian API Health dan Stats.
-8. Pengujian Cache Invalidation.
-9. Pengujian Redis Outage.
-10. Pengujian Web Outage.
-11. Pengujian kesalahan konfigurasi upstream Nginx (HTTP 502).
-12. Pemulihan konfigurasi Nginx (HTTP 200).
-13. Pengujian Restart Resilience.
-14. Status seluruh container setelah restart.
-15. Pengujian persistensi data PostgreSQL setelah restart.
+Dokumentasi screenshot disimpan dalam folder `bukti-pengujian/screenshot/`.
 
-Catatan: Checklist hanya menandai pengujian yang sudah benar-benar dilakukan.
+### A. Dashboard Aplikasi
+
+1. `01-dashboard-overview.png` – Tampilan halaman Overview.
+2. `01-dashboard-services.png` – Tampilan halaman Services.
+3. `01-dashboard-database.png` – Tampilan halaman Database.
+4. `01-dashboard-cache-monitor.png` – Tampilan halaman Cache Monitor.
+5. `01-dashboard-activity.png` – Tampilan halaman Activity.
+
+### B. Implementasi dan Pengujian Service
+
+6. `02-container-healthy.png` – Status container dan healthcheck.
+7. `03-redis-cache-miss.png` – Pengujian Redis Cache MISS.
+8. `04-redis-cache-hit.png` – Pengujian Redis Cache HIT.
+9. `05-postgresql-save-note.png` – Pengujian penyimpanan data PostgreSQL.
+10. `06-postgresql-persistence.png` – Pengujian persistensi PostgreSQL.
+11. `07-api-health-stats.png` – Pengujian API Health dan Stats.
+12. `08-redis-cache-invalidation.png` – Pengujian Cache Invalidation.
+
+### C. Pengujian Gangguan dan Pemulihan
+
+13. `09-redis-outage.png` – Pengujian gangguan Redis.
+14. `10-web-outage.png` – Pengujian gangguan Web Application.
+15. `11-nginx-upstream-error-502.png` – Pengujian kesalahan konfigurasi upstream Nginx dengan HTTP 502.
+16. `12-nginx-recovery-200.png` – Bukti pemulihan Nginx dengan HTTP 200.
+17. `13-restart-resilience.png` – Pengujian Restart Resilience.
+18. `14-container-healthy-after-restart.png` – Status container setelah restart.
+19. `15-postgresql-data-after-restart.png` – Pemeriksaan data PostgreSQL setelah restart.
+20. `16-postgresql-persistence-after-container-recreation.png` – Pengujian persistensi PostgreSQL setelah container dibuat ulang.
+
+### D. Konfigurasi dan Infrastruktur Docker
+
+21. `17-arsitektur-docker-compose.png` – Dokumentasi arsitektur Docker Compose.
+22. `18-dockerfile-configuration.png` – Dokumentasi konfigurasi Dockerfile.
+23. `19-compose-configuration.png` – Dokumentasi konfigurasi Docker Compose.
+24. `20-docker-network.png` – Dokumentasi Docker Network.
+25. `21-docker-volume.png` – Dokumentasi Docker Volume.
+26. `22-inter-container-communication.png` – Pengujian komunikasi antarkontainer.
+27. `23-nginx-troubleshooting-logs.png` – Dokumentasi troubleshooting Nginx.
+
+### E. Status Akhir Implementasi
+
+28. `docker-compose-status-final.png` – Status akhir seluruh service Docker Compose.
+
+**Catatan:** Dokumentasi lokal yang diperiksa berisi 28 file screenshot setelah pembaruan dashboard dan penambahan screenshot status akhir. Checklist ini mencantumkan file bukti yang tersedia dan tidak menggantikan hasil pengujian sebenarnya.
