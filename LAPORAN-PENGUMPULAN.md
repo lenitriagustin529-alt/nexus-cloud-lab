@@ -100,7 +100,7 @@ Dokumentasi implementasi dan pengujian disimpan dalam folder:
 
 `bukti-pengujian/screenshot/`
 
-Berdasarkan daftar file pada komputer, terdapat **29 screenshot** yang terdiri dari:
+Berdasarkan daftar file pada komputer, terdapat **28 screenshot** yang terdiri dari:
 
 - 5 screenshot halaman dashboard terbaru: Overview, Services, Database, Cache Monitor, dan Activity.
 - 23 screenshot dokumentasi implementasi, konfigurasi, pengujian, serta troubleshooting.
